@@ -1,6 +1,5 @@
 import fs from 'fs'
 import { AddressInfo } from 'net'
-import os from 'os'
 import { fileURLToPath } from 'url'
 import path from 'path'
 import colors from 'picocolors'
@@ -55,20 +54,11 @@ interface PluginConfig {
     refresh?: boolean|string|string[]|RefreshConfig|RefreshConfig[]
 
     /**
-     * Utilise the Herd or Valet TLS certificates.
+     * Utilize TLS certificates.
      *
      * @default false
      */
     detectTls?: string|boolean,
-
-    /**
-     * Utilise the Herd or Valet TLS certificates.
-     *
-     * @default false
-     * @deprecated use "detectTls" instead
-     */
-    valetTls?: string|boolean,
-
     /**
      * Transform the code while serving.
      */
@@ -149,7 +139,7 @@ function resolveLitestarPlugin(pluginConfig: Required<PluginConfig>): LitestarPl
                 },
                 server: {
                     origin: userConfig.server?.origin ?? '__litestar_vite_placeholder__',
-                    ...(process.env.LARAVEL_SAIL ? {
+                    ...(process.env.LITESTAR_VITE_IN_CONTAINER ? {
                         host: userConfig.server?.host ?? '0.0.0.0',
                         port: userConfig.server?.port ?? (env.VITE_PORT ? parseInt(env.VITE_PORT) : 5173),
                         strictPort: userConfig.server?.strictPort ?? true,
@@ -208,7 +198,7 @@ function resolveLitestarPlugin(pluginConfig: Required<PluginConfig>): LitestarPl
                     fs.writeFileSync(pluginConfig.hotFile, viteDevServerUrl)
 
                     setTimeout(() => {
-                        server.config.logger.info(`\n  ${colors.red(`${colors.bold('LARAVEL')} ${litestarVersion()}`)}  ${colors.dim('plugin')} ${colors.bold(`v${pluginVersion()}`)}`)
+                        server.config.logger.info(`\n  ${colors.red(`${colors.bold('LITESTAR')} ${litestarVersion()}`)}  ${colors.dim('plugin')} ${colors.bold(`v${pluginVersion()}`)}`)
                         server.config.logger.info('')
                         server.config.logger.info(`  ${colors.green('➜')}  ${colors.bold('APP_URL')}: ${colors.cyan(appUrl.replace(/:(\d+)/, (_, port) => `:${colors.bold(port)}`))}`)
                     }, 100)
@@ -249,24 +239,16 @@ function resolveLitestarPlugin(pluginConfig: Required<PluginConfig>): LitestarPl
  * Validate the command can run in the given environment.
  */
 function ensureCommandShouldRunInEnvironment(command: 'build'|'serve', env: Record<string, string>): void {
-    if (command === 'build' || env.LARAVEL_BYPASS_ENV_CHECK === '1') {
+    if (command === 'build' || env.LITESTAR_BYPASS_ENV_CHECK === '1') {
         return;
     }
 
-    if (typeof env.LARAVEL_VAPOR !== 'undefined') {
-        throw Error('You should not run the Vite HMR server on Vapor. You should build your assets for production instead. To disable this ENV check you may set LARAVEL_BYPASS_ENV_CHECK=1');
-    }
-
-    if (typeof env.LARAVEL_FORGE !== 'undefined') {
-        throw Error('You should not run the Vite HMR server in your Forge deployment script. You should build your assets for production instead. To disable this ENV check you may set LARAVEL_BYPASS_ENV_CHECK=1');
-    }
-
-    if (typeof env.LARAVEL_ENVOYER !== 'undefined') {
-        throw Error('You should not run the Vite HMR server in your Envoyer hook. You should build your assets for production instead. To disable this ENV check you may set LARAVEL_BYPASS_ENV_CHECK=1')
+    if (typeof env.LITESTAR_MODE !== 'undefined') {
+        throw Error('You should not run the Vite HMR server when Litestar is in production. You should build your assets for production instead. To disable this ENV check you may set LITESTAR_BYPASS_ENV_CHECK=1');
     }
 
     if (typeof env.CI !== 'undefined') {
-        throw Error('You should not run the Vite HMR server in CI environments. You should build your assets for production instead. To disable this ENV check you may set LARAVEL_BYPASS_ENV_CHECK=1')
+        throw Error('You should not run the Vite HMR server in CI environments. You should build your assets for production instead. To disable this ENV check you may set LITESTAR_BYPASS_ENV_CHECK=1')
     }
 }
 
@@ -342,8 +324,7 @@ function resolvePluginConfig(config: string|string[]|PluginConfig): Required<Plu
         ssrOutputDirectory: config.ssrOutputDirectory ?? 'bootstrap/ssr',
         refresh: config.refresh ?? false,
         hotFile: config.hotFile ?? path.join((config.publicDirectory ?? 'public'), 'hot'),
-        valetTls: config.valetTls ?? false,
-        detectTls: config.detectTls ?? config.valetTls ?? false,
+        detectTls: config.detectTls ?? false,
         transformOnServe: config.transformOnServe ?? ((code) => code),
     }
 }
@@ -352,7 +333,7 @@ function resolvePluginConfig(config: string|string[]|PluginConfig): Required<Plu
  * Resolve the Vite base option from the configuration.
  */
 function resolveBase(config: Required<PluginConfig>, assetUrl: string): string {
-    return assetUrl + (! assetUrl.endsWith('/') ? '/' : '') + config.buildDirectory + '/'
+    return assetUrl + (assetUrl.endsWith('/') ? '' : '/') + config.buildDirectory + '/'
 }
 
 /**
@@ -416,9 +397,9 @@ function resolveDevServerUrl(address: AddressInfo, config: ResolvedConfig, userC
 
     const configHmrHost = typeof config.server.hmr === 'object' ? config.server.hmr.host : null
     const configHost = typeof config.server.host === 'string' ? config.server.host : null
-    const sailHost = process.env.LARAVEL_SAIL && ! userConfig.server?.host ? 'localhost' : null
+    const remoteHost = process.env.LITESTAR_VITE_IN_CONTAINER && ! userConfig.server?.host ? 'localhost' : null
     const serverAddress = isIpv6(address) ? `[${address.address}]` : address.address
-    const host = configHmrHost ?? sailHost ?? configHost ?? serverAddress
+    const host = configHmrHost ?? remoteHost ?? configHost ?? serverAddress
 
     const configHmrClientPort = typeof config.server.hmr === 'object' ? config.server.hmr.clientPort : null
     const port = configHmrClientPort ?? address.port
@@ -429,7 +410,6 @@ function resolveDevServerUrl(address: AddressInfo, config: ResolvedConfig, userC
 function isIpv6(address: AddressInfo): boolean {
     return address.family === 'IPv6'
         // In node >=18.0 <18.4 this was an integer value. This was changed in a minor version.
-        // See: https://github.com/litestar/vite-plugin/issues/103
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore-next-line
         || address.family === 6;
@@ -520,11 +500,11 @@ function resolveDevelopmentEnvironmentServerConfig(host: string|boolean): {
 
     host = host === true ? resolveDevelopmentEnvironmentHost(configPath) : host
 
-    const keyPath = path.resolve(configPath, 'Certificates', `${host}.key`)
-    const certPath = path.resolve(configPath, 'Certificates', `${host}.crt`)
+    const keyPath = path.resolve(configPath, 'certs', `${host}.key`)
+    const certPath = path.resolve(configPath, 'certs', `${host}.crt`)
 
     if (! fs.existsSync(keyPath) || ! fs.existsSync(certPath)) {
-        throw Error(`Unable to find certificate files for your host [${host}] in the [${configPath}/Certificates] directory. Ensure you have secured the site via the Herd UI or run \`valet secure\`.`)
+        throw Error(`Unable to find certificate files for your host [${host}] in the [${configPath}/certs] directory.`)
     }
 
     return {
@@ -538,16 +518,16 @@ function resolveDevelopmentEnvironmentServerConfig(host: string|boolean): {
 }
 
 /**
- * Resolve the path to the Herd or Valet configuration directory.
+ * Resolve the path app config directory.
  */
 function determineDevelopmentEnvironmentConfigPath(): string {
-    const herdConfigPath = path.resolve(os.homedir(), 'Library', 'Application Support', 'Herd', 'config', 'valet')
+    const envConfigPath = path.resolve(process.cwd(), '.config')
 
-    if (fs.existsSync(herdConfigPath)) {
-        return herdConfigPath
+    if (fs.existsSync(envConfigPath)) {
+        return envConfigPath
     }
 
-    return path.resolve(os.homedir(), '.config', 'valet');
+    return path.resolve(process.cwd(), '.config' );
 }
 
 /**
