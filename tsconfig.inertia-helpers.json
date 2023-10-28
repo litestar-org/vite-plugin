@@ -1,0 +1,9 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "outDir": "inertia-helpers"
+    },
+    "include": [
+        "./src/inertia-helpers/index.ts"
+    ]
+}
