@@ -46,7 +46,7 @@ interface PluginConfig {
     ssrOutputDirectory?: string
 
     /**
-     * Configuration for performing full page refresh on blade (or other) file changes.
+     * Configuration for performing full page refresh on python (or other) file changes.
      *
      * {@link https://github.com/ElMassimo/vite-plugin-full-reload}
      * @default false
@@ -79,11 +79,7 @@ type DevServerUrl = `${'http'|'https'}://${string}:${number}`
 let exitHandlersBound = false
 
 export const refreshPaths = [
-    'app/View/Components/**',
-    'resources/views/**',
-    'resources/lang/**',
-    'lang/**',
-    'routes/**',
+    '**/*.py','**/*.j2','**/*.html.j2',"**/assets/**/*"
 ]
 
 /**
