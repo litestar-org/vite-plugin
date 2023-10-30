@@ -65,7 +65,8 @@ describe("litestar-vite-plugin", () => {
     it("accepts a full configuration", () => {
         const plugin = litestar({
             input: "resources/js/app.ts",
-            publicDirectory: "other-public",
+            assetUrl: "other-build",
+            assetDirectory: "other-public",
             buildDirectory: "other-build",
             ssr: "resources/js/ssr.ts",
             ssrOutputDirectory: "other-ssr-output",
@@ -75,16 +76,16 @@ describe("litestar-vite-plugin", () => {
             {},
             { command: "build", mode: "production" }
         );
-        expect(config.base).toBe("/other-build/");
+        expect(config.base).toBe("other-build/");
         expect(config.build.manifest).toBe(true);
-        expect(config.build.outDir).toBe("other-public/other-build");
+        expect(config.build.outDir).toBe("other-build");
         expect(config.build.rollupOptions.input).toBe("resources/js/app.ts");
 
         const ssrConfig = plugin.config(
             { build: { ssr: true } },
             { command: "build", mode: "production" }
         );
-        expect(ssrConfig.base).toBe("/other-build/");
+        expect(ssrConfig.base).toBe("other-build/");
         expect(ssrConfig.build.manifest).toBe(false);
         expect(ssrConfig.build.outDir).toBe("other-ssr-output");
         expect(ssrConfig.build.rollupOptions.input).toBe("resources/js/ssr.ts");
@@ -115,7 +116,33 @@ describe("litestar-vite-plugin", () => {
             {},
             { command: "build", mode: "production" }
         );
-        expect(config.base).toBe("/build/");
+        expect(config.base).toBe("static/");
+        expect(config.build.manifest).toBe(true);
+        expect(config.build.outDir).toBe("public");
+        expect(config.build.rollupOptions.input).toBe("resources/js/app.js");
+
+        const ssrConfig = plugin.config(
+            { build: { ssr: true } },
+            { command: "build", mode: "production" }
+        );
+        expect(ssrConfig.base).toBe("static/");
+        expect(ssrConfig.build.manifest).toBe(false);
+        expect(ssrConfig.build.outDir).toBe("bootstrap/ssr");
+        expect(ssrConfig.build.rollupOptions.input).toBe("resources/js/ssr.js");
+    });
+    it("accepts a partial configuration with an asset URL", () => {
+        const plugin = litestar({
+            input: "resources/js/app.js",
+            buildDirectory: "/public/build/",
+            assetUrl: "/over/the/rainbow/",
+            ssr: "resources/js/ssr.js",
+        })[0];
+
+        const config = plugin.config(
+            {},
+            { command: "build", mode: "production" }
+        );
+        expect(config.base).toBe("/over/the/rainbow/");
         expect(config.build.manifest).toBe(true);
         expect(config.build.outDir).toBe("public/build");
         expect(config.build.rollupOptions.input).toBe("resources/js/app.js");
@@ -124,12 +151,11 @@ describe("litestar-vite-plugin", () => {
             { build: { ssr: true } },
             { command: "build", mode: "production" }
         );
-        expect(ssrConfig.base).toBe("/build/");
+        expect(ssrConfig.base).toBe("/over/the/rainbow/");
         expect(ssrConfig.build.manifest).toBe(false);
         expect(ssrConfig.build.outDir).toBe("bootstrap/ssr");
         expect(ssrConfig.build.rollupOptions.input).toBe("resources/js/ssr.js");
     });
-
     it("uses the default entry point when ssr entry point is not provided", () => {
         // This is support users who may want a dedicated Vite config for SSR.
         const plugin = litestar("resources/js/ssr.js")[0];
@@ -149,25 +175,25 @@ describe("litestar-vite-plugin", () => {
             {},
             { command: "serve", mode: "development" }
         );
-        expect(devConfig.base).toBe("");
+        expect(devConfig.base).toBe("static");
 
         const prodConfig = plugin.config(
             {},
             { command: "build", mode: "production" }
         );
-        expect(prodConfig.base).toBe("http://example.com/build/");
+        expect(prodConfig.base).toBe("http://example.com/");
 
         delete process.env.ASSET_URL;
     });
 
-    it("prevents setting an empty publicDirectory", () => {
+    it("prevents setting an empty assetDirectory", () => {
         expect(
             () =>
                 litestar({
                     input: "resources/js/app.js",
-                    publicDirectory: "",
+                    assetDirectory: "",
                 })[0]
-        ).toThrowError("publicDirectory must be a subdirectory");
+        ).toThrowError("assetDirectory must be a subdirectory");
     });
 
     it("prevents setting an empty buildDirectory", () => {
@@ -183,7 +209,7 @@ describe("litestar-vite-plugin", () => {
     it("handles surrounding slashes on directories", () => {
         const plugin = litestar({
             input: "resources/js/app.js",
-            publicDirectory: "/public/test/",
+            assetDirectory: "/assets/test/",
             buildDirectory: "/build/test/",
             ssrOutputDirectory: "/ssr-output/test/",
         })[0];
@@ -192,8 +218,8 @@ describe("litestar-vite-plugin", () => {
             {},
             { command: "build", mode: "production" }
         );
-        expect(config.base).toBe("/build/test/");
-        expect(config.build.outDir).toBe("public/test/build/test");
+        expect(config.base).toBe("static/");
+        expect(config.build.outDir).toBe("build/test");
 
         const ssrConfig = plugin.config(
             { build: { ssr: true } },
@@ -210,7 +236,7 @@ describe("litestar-vite-plugin", () => {
             { command: "build", mode: "development" }
         );
 
-        expect(config.resolve.alias["@"]).toBe("/resources/js");
+        expect(config.resolve.alias["@"]).toBe("/resources/");
     });
 
     it("respects a users existing @ alias", () => {
@@ -244,7 +270,7 @@ describe("litestar-vite-plugin", () => {
 
         expect(config.resolve.alias).toEqual([
             { find: "@", replacement: "/something/else" },
-            { find: "@", replacement: "/resources/js" },
+            { find: "@", replacement: "/resources/" },
         ]);
     });
 
