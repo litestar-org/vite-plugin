@@ -28,12 +28,6 @@ interface PluginConfig {
      */
     assetUrl?: string;
     /**
-     * The base directory for all Vite source
-     *
-     * @default undefined
-     */
-    rootDirectory?: string | undefined;
-    /**
      * The public directory where all compiled assets should be written.
      *
      * @default 'public'
@@ -55,7 +49,7 @@ interface PluginConfig {
     /**
      * The path to the "hot" file.
      *
-     * @default `${assetDirectory}/hot`
+     * @default `${buildDirectory}/hot`
      */
     hotFile?: string;
 
@@ -67,7 +61,7 @@ interface PluginConfig {
     /**
      * The directory where the SSR bundle should be written.
      *
-     * @default '${assetDirectory}/bootstrap/ssr'
+     * @default '${buildDirectory}/bootstrap/ssr'
      */
     ssrOutputDirectory?: string;
 
@@ -181,7 +175,7 @@ function resolveLitestarPlugin(
                     origin:
                         userConfig.server?.origin ??
                         "__litestar_vite_placeholder__",
-                    ...(process.env.LITESTAR_VITE_IN_CONTAINER
+                    ...(process.env.LITESTAR_VITE_ALLOW_REMOTE
                         ? {
                               host: userConfig.server?.host ?? "0.0.0.0",
                               port:
@@ -397,12 +391,6 @@ function resolvePluginConfig(
             'litestar-vite-plugin: missing configuration for "input".'
         );
     }
-    if (typeof config.rootDirectory === "undefined") {
-        config.rootDirectory = "";
-    }
-    if (typeof config.rootDirectory === "string") {
-        config.rootDirectory = config.rootDirectory.trim().replace(/^\/+/, "");
-    }
     if (typeof config.resourceDirectory === "string") {
         config.resourceDirectory = config.resourceDirectory
             .trim()
@@ -454,9 +442,8 @@ function resolvePluginConfig(
     return {
         input: config.input,
         assetUrl: config.assetUrl || (config.assetUrl ?? "static"),
-        rootDirectory: config.rootDirectory ?? undefined,
-        resourceDirectory: config.resourceDirectory ?? "",
-        assetDirectory: config.assetDirectory ?? "",
+        resourceDirectory: config.resourceDirectory ?? "/resources/",
+        assetDirectory: config.assetDirectory ?? "assets",
         buildDirectory:
             config.buildDirectory || (config.buildDirectory ?? "public"),
         ssr: config.ssr ?? config.input,
@@ -558,7 +545,7 @@ function resolveDevServerUrl(
     const configHost =
         typeof config.server.host === "string" ? config.server.host : null;
     const remoteHost =
-        process.env.LITESTAR_VITE_IN_CONTAINER && !userConfig.server?.host
+        process.env.LITESTAR_VITE_ALLOW_REMOTE && !userConfig.server?.host
             ? "localhost"
             : null;
     const serverAddress = isIpv6(address)

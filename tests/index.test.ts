@@ -275,7 +275,7 @@ describe("litestar-vite-plugin", () => {
     });
 
     it("configures the Vite server when inside a Sail container", () => {
-        process.env.LITESTAR_VITE_IN_CONTAINER = "1";
+        process.env.LITESTAR_VITE_ALLOW_REMOTE = "1";
         const plugin = litestar("resources/js/app.js")[0];
 
         const config = plugin.config(
@@ -286,11 +286,11 @@ describe("litestar-vite-plugin", () => {
         expect(config.server.port).toBe(5173);
         expect(config.server.strictPort).toBe(true);
 
-        delete process.env.LITESTAR_VITE_IN_CONTAINER;
+        delete process.env.LITESTAR_VITE_ALLOW_REMOTE;
     });
 
     it("allows the Vite port to be configured when inside a Sail container", () => {
-        process.env.LITESTAR_VITE_IN_CONTAINER = "1";
+        process.env.LITESTAR_VITE_ALLOW_REMOTE = "1";
         process.env.VITE_PORT = "1234";
         const plugin = litestar("resources/js/app.js")[0];
 
@@ -302,12 +302,12 @@ describe("litestar-vite-plugin", () => {
         expect(config.server.port).toBe(1234);
         expect(config.server.strictPort).toBe(true);
 
-        delete process.env.LITESTAR_VITE_IN_CONTAINER;
+        delete process.env.LITESTAR_VITE_ALLOW_REMOTE;
         delete process.env.VITE_PORT;
     });
 
     it("allows the server configuration to be overridden inside a Sail container", () => {
-        process.env.LITESTAR_VITE_IN_CONTAINER = "1";
+        process.env.LITESTAR_VITE_ALLOW_REMOTE = "1";
         const plugin = litestar("resources/js/app.js")[0];
 
         const config = plugin.config(
@@ -324,7 +324,7 @@ describe("litestar-vite-plugin", () => {
         expect(config.server.port).toBe(1234);
         expect(config.server.strictPort).toBe(false);
 
-        delete process.env.LITESTAR_VITE_IN_CONTAINER;
+        delete process.env.LITESTAR_VITE_ALLOW_REMOTE;
     });
 
     it("prevents the Inertia helpers from being externalized", () => {
