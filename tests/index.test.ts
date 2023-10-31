@@ -67,7 +67,7 @@ describe("litestar-vite-plugin", () => {
             input: "resources/js/app.ts",
             assetUrl: "other-build",
             assetDirectory: "other-public",
-            buildDirectory: "other-build",
+            bundleDirectory: "other-build",
             ssr: "resources/js/ssr.ts",
             ssrOutputDirectory: "other-ssr-output",
         })[0];
@@ -133,7 +133,7 @@ describe("litestar-vite-plugin", () => {
     it("accepts a partial configuration with an asset URL", () => {
         const plugin = litestar({
             input: "resources/js/app.js",
-            buildDirectory: "/public/build/",
+            bundleDirectory: "/public/build/",
             assetUrl: "/over/the/rainbow/",
             ssr: "resources/js/ssr.js",
         })[0];
@@ -196,21 +196,21 @@ describe("litestar-vite-plugin", () => {
         ).toThrowError("assetDirectory must be a subdirectory");
     });
 
-    it("prevents setting an empty buildDirectory", () => {
+    it("prevents setting an empty bundleDirectory", () => {
         expect(
             () =>
                 litestar({
                     input: "resources/js/app.js",
-                    buildDirectory: "",
+                    bundleDirectory: "",
                 })[0]
-        ).toThrowError("buildDirectory must be a subdirectory");
+        ).toThrowError("bundleDirectory must be a subdirectory");
     });
 
     it("handles surrounding slashes on directories", () => {
         const plugin = litestar({
             input: "resources/js/app.js",
             assetDirectory: "/assets/test/",
-            buildDirectory: "/build/test/",
+            bundleDirectory: "/build/test/",
             ssrOutputDirectory: "/ssr-output/test/",
         })[0];
 

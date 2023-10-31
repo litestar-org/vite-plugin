@@ -28,11 +28,11 @@ interface PluginConfig {
      */
     assetUrl?: string;
     /**
-     * The public directory where all compiled assets should be written.
+     * The public directory where all compiled/bundled assets should be written.
      *
      * @default 'public'
      */
-    buildDirectory?: string;
+    bundleDirectory?: string;
     /**
      * The directory where all typescript/javascript source are written.  This is used as the default "@" alias is pointed.
      *
@@ -49,7 +49,7 @@ interface PluginConfig {
     /**
      * The path to the "hot" file.
      *
-     * @default `${buildDirectory}/hot`
+     * @default `${bundleDirectory}/hot`
      */
     hotFile?: string;
 
@@ -61,7 +61,7 @@ interface PluginConfig {
     /**
      * The directory where the SSR bundle should be written.
      *
-     * @default '${buildDirectory}/bootstrap/ssr'
+     * @default '${bundleDirectory}/bootstrap/ssr'
      */
     ssrOutputDirectory?: string;
 
@@ -415,15 +415,15 @@ function resolvePluginConfig(
         }
     }
 
-    if (typeof config.buildDirectory === "string") {
-        config.buildDirectory = config.buildDirectory
+    if (typeof config.bundleDirectory === "string") {
+        config.bundleDirectory = config.bundleDirectory
             .trim()
             .replace(/^\/+/, "")
             .replace(/\/+$/, "");
 
-        if (config.buildDirectory === "") {
+        if (config.bundleDirectory === "") {
             throw new Error(
-                "litestar-vite-plugin: buildDirectory must be a subdirectory. E.g. 'public'."
+                "litestar-vite-plugin: bundleDirectory must be a subdirectory. E.g. 'public'."
             );
         }
     }
@@ -444,8 +444,8 @@ function resolvePluginConfig(
         assetUrl: config.assetUrl || (config.assetUrl ?? "static"),
         resourceDirectory: config.resourceDirectory ?? "/resources/",
         assetDirectory: config.assetDirectory ?? "assets",
-        buildDirectory:
-            config.buildDirectory || (config.buildDirectory ?? "public"),
+        bundleDirectory:
+            config.bundleDirectory || (config.bundleDirectory ?? "public"),
         ssr: config.ssr ?? config.input,
         ssrOutputDirectory: config.ssrOutputDirectory ?? "bootstrap/ssr",
         refresh: config.refresh ?? false,
@@ -487,7 +487,7 @@ function resolveOutDir(
         return config.ssrOutputDirectory;
     }
 
-    return path.join(config.buildDirectory);
+    return path.join(config.bundleDirectory);
 }
 
 function resolveFullReloadConfig({
