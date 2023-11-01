@@ -167,8 +167,8 @@ describe("litestar-vite-plugin", () => {
         expect(ssrConfig.build.rollupOptions.input).toBe("resources/js/ssr.js");
     });
 
-    it("prefixes the base with ASSET_URL in production mode", () => {
-        process.env.ASSET_URL = "http://example.com";
+    it("prefixes the base with LITESTAR_ASSET_URL in production mode", () => {
+        process.env.LITESTAR_ASSET_URL = "http://example.com";
         const plugin = litestar("resources/js/app.js")[0];
 
         const devConfig = plugin.config(
@@ -183,7 +183,7 @@ describe("litestar-vite-plugin", () => {
         );
         expect(prodConfig.base).toBe("http://example.com/");
 
-        delete process.env.ASSET_URL;
+        delete process.env.LITESTAR_ASSET_URL;
     });
 
     it("prevents setting an empty assetDirectory", () => {
@@ -409,7 +409,13 @@ describe("litestar-vite-plugin", () => {
         expect(plugins.length).toBe(2);
         /** @ts-ignore */
         expect(plugins[1].__litestar_plugin_config).toEqual({
-            paths: ["**/*.py", "**/*.j2", "**/*.html.j2", "**/assets/**/*"],
+            paths: [
+                "**/*.py",
+                "**/*.j2",
+                "**/*.html.j2",
+                "**/*.html",
+                "**/assets/**/*",
+            ],
         });
     });
 
