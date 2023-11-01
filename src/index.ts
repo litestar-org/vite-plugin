@@ -102,6 +102,7 @@ export const refreshPaths = [
     "**/*.py",
     "**/*.j2",
     "**/*.html.j2",
+    "**/*.html",
     "**/assets/**/*",
 ];
 
@@ -142,7 +143,7 @@ function resolveLitestarPlugin(
             userConfig = config;
             const ssr = !!userConfig.build?.ssr;
             const env = loadEnv(mode, userConfig.envDir || process.cwd(), "");
-            const assetUrl = env.ASSET_URL || pluginConfig.assetUrl;
+            const assetUrl = env.LITESTAR_ASSET_URL || pluginConfig.assetUrl;
             const serverConfig =
                 command === "serve"
                     ? resolveDevelopmentEnvironmentServerConfig(
