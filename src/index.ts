@@ -30,13 +30,19 @@ interface PluginConfig {
     /**
      * The public directory where all compiled/bundled assets should be written.
      *
-     * @default 'public'
+     * @default 'public/dist'
      */
     bundleDirectory?: string;
     /**
-     * The directory where all typescript/javascript source are written.  This is used as the default "@" alias is pointed.
+     * The root directory for your project.
      *
-     * @default 'resources'
+     * @default ''
+     */
+    rootDirectory?: string;
+    /**
+     * Litestar's public assets directory.  These are the assets that Vite will serve when developing.
+     *
+     * @default '${rootDirectory}/resources'
      */
     resourceDirectory?: string;
     /**
@@ -159,6 +165,7 @@ function resolveLitestarPlugin(
                     (command === "build"
                         ? resolveBase(pluginConfig, assetUrl)
                         : pluginConfig.assetUrl),
+                root: pluginConfig.rootDirectory,
                 publicDir: userConfig.publicDir ?? false,
                 build: {
                     manifest: userConfig.build?.manifest ?? !ssr,
@@ -403,6 +410,17 @@ function resolvePluginConfig(
             );
         }
     }
+    if (typeof config.rootDirectory === "string") {
+        config.rootDirectory = config.rootDirectory
+            .trim()
+            .replace(/^\/+/, "");
+
+        if (config.rootDirectory === "") {
+            throw new Error(
+                "litestar-vite-plugin: rootDirectory must be a subdirectory. E.g. '.'."
+            );
+        }
+    }
 
     if (typeof config.assetDirectory === "string") {
         config.assetDirectory = config.assetDirectory
@@ -442,15 +460,16 @@ function resolvePluginConfig(
 
     return {
         input: config.input,
+        rootDirectory: config.rootDirectory ?? process.cwd(),
         assetUrl: config.assetUrl || (config.assetUrl ?? "static"),
         resourceDirectory: config.resourceDirectory ?? "/resources/",
         assetDirectory: config.assetDirectory ?? "assets",
         bundleDirectory:
             config.bundleDirectory || (config.bundleDirectory ?? "public"),
         ssr: config.ssr ?? config.input,
-        ssrOutputDirectory: config.ssrOutputDirectory ?? "bootstrap/ssr",
+        ssrOutputDirectory: config.ssrOutputDirectory ?? path.join((config.resourceDirectory ?? "resources"), "bootstrap/ssr"),
         refresh: config.refresh ?? false,
-        hotFile: config.hotFile ?? path.join(config.assetDirectory ?? "hot"),
+        hotFile: config.hotFile ?? path.join((config.bundleDirectory ?? "public"),"hot"),
         detectTls: config.detectTls ?? false,
         transformOnServe: config.transformOnServe ?? ((code) => code),
     };

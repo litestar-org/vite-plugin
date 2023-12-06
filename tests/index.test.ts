@@ -127,7 +127,7 @@ describe("litestar-vite-plugin", () => {
         );
         expect(ssrConfig.base).toBe("static/");
         expect(ssrConfig.build.manifest).toBe(false);
-        expect(ssrConfig.build.outDir).toBe("bootstrap/ssr");
+        expect(ssrConfig.build.outDir).toBe("resources/bootstrap/ssr");
         expect(ssrConfig.build.rollupOptions.input).toBe("resources/js/ssr.js");
     });
     it("accepts a partial configuration with an asset URL", () => {
@@ -153,7 +153,7 @@ describe("litestar-vite-plugin", () => {
         );
         expect(ssrConfig.base).toBe("/over/the/rainbow/");
         expect(ssrConfig.build.manifest).toBe(false);
-        expect(ssrConfig.build.outDir).toBe("bootstrap/ssr");
+        expect(ssrConfig.build.outDir).toBe("resources/bootstrap/ssr");
         expect(ssrConfig.build.rollupOptions.input).toBe("resources/js/ssr.js");
     });
     it("uses the default entry point when ssr entry point is not provided", () => {
