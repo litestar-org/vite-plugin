@@ -34,15 +34,9 @@ interface PluginConfig {
      */
     bundleDirectory?: string;
     /**
-     * The root directory for your project.
-     *
-     * @default ''
-     */
-    rootDirectory?: string;
-    /**
      * Litestar's public assets directory.  These are the assets that Vite will serve when developing.
      *
-     * @default '${rootDirectory}/resources'
+     * @default 'resources'
      */
     resourceDirectory?: string;
     /**
@@ -165,7 +159,6 @@ function resolveLitestarPlugin(
                     (command === "build"
                         ? resolveBase(pluginConfig, assetUrl)
                         : pluginConfig.assetUrl),
-                root: pluginConfig.rootDirectory,
                 publicDir: userConfig.publicDir ?? false,
                 build: {
                     manifest: userConfig.build?.manifest ?? !ssr,
@@ -410,18 +403,6 @@ function resolvePluginConfig(
             );
         }
     }
-    if (typeof config.rootDirectory === "string") {
-        config.rootDirectory = config.rootDirectory
-            .trim()
-            .replace(/^\/+/, "");
-
-        if (config.rootDirectory === "") {
-            throw new Error(
-                "litestar-vite-plugin: rootDirectory must be a subdirectory. E.g. '.'."
-            );
-        }
-    }
-
     if (typeof config.assetDirectory === "string") {
         config.assetDirectory = config.assetDirectory
             .trim()
@@ -460,7 +441,6 @@ function resolvePluginConfig(
 
     return {
         input: config.input,
-        rootDirectory: config.rootDirectory ?? process.cwd(),
         assetUrl: config.assetUrl || (config.assetUrl ?? "static"),
         resourceDirectory: config.resourceDirectory ?? "/resources/",
         assetDirectory: config.assetDirectory ?? "assets",
