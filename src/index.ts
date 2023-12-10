@@ -443,7 +443,7 @@ function resolvePluginConfig(
         input: config.input,
         assetUrl: config.assetUrl || (config.assetUrl ?? "static"),
         resourceDirectory: config.resourceDirectory ?? "/resources/",
-        assetDirectory: config.assetDirectory ?? "assets",
+        assetDirectory: config.assetDirectory ?? path.join(config.resourceDirectory ?? "/resources/", 'assets'),
         bundleDirectory:
             config.bundleDirectory || (config.bundleDirectory ?? "public"),
         ssr: config.ssr ?? config.input,
