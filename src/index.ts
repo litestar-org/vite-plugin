@@ -39,12 +39,6 @@ interface PluginConfig {
      * @default 'resources'
      */
     resourceDirectory?: string;
-    /**
-     * Litestar's public assets directory.  These are the assets that Vite will serve when developing.
-     *
-     * @default '${resourceDirectory}/assets'
-     */
-    assetDirectory?: string;
 
     /**
      * The path to the "hot" file.
@@ -403,17 +397,6 @@ function resolvePluginConfig(
             );
         }
     }
-    if (typeof config.assetDirectory === "string") {
-        config.assetDirectory = config.assetDirectory
-            .trim()
-            .replace(/^\/+/, "");
-
-        if (config.assetDirectory === "") {
-            throw new Error(
-                "litestar-vite-plugin: assetDirectory must be a subdirectory. E.g. 'assets'."
-            );
-        }
-    }
 
     if (typeof config.bundleDirectory === "string") {
         config.bundleDirectory = config.bundleDirectory
@@ -443,7 +426,6 @@ function resolvePluginConfig(
         input: config.input,
         assetUrl: config.assetUrl || (config.assetUrl ?? "static"),
         resourceDirectory: config.resourceDirectory ?? "/resources/",
-        assetDirectory: config.assetDirectory ?? path.join(config.resourceDirectory ?? "/resources/", 'assets'),
         bundleDirectory:
             config.bundleDirectory || (config.bundleDirectory ?? "public"),
         ssr: config.ssr ?? config.input,
