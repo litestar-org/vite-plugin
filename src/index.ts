@@ -137,7 +137,7 @@ function resolveLitestarPlugin(
             userConfig = config;
             const ssr = !!userConfig.build?.ssr;
             const env = loadEnv(mode, userConfig.envDir || process.cwd(), "");
-            const assetUrl = env.LITESTAR_ASSET_URL || pluginConfig.assetUrl;
+            const assetUrl = env.ASSET_URL || pluginConfig.assetUrl;
             const serverConfig =
                 command === "serve"
                     ? resolveDevelopmentEnvironmentServerConfig(
@@ -170,7 +170,7 @@ function resolveLitestarPlugin(
                     origin:
                         userConfig.server?.origin ??
                         "__litestar_vite_placeholder__",
-                    ...(process.env.LITESTAR_VITE_ALLOW_REMOTE
+                    ...(process.env.VITE_ALLOW_REMOTE
                         ? {
                               host: userConfig.server?.host ?? "0.0.0.0",
                               port:
@@ -351,7 +351,7 @@ function ensureCommandShouldRunInEnvironment(
  * The version of Litestar being run.
  */
 function litestarVersion(): string {
-    return "";
+    return "X.Y.Z";
 }
 
 /**
@@ -424,7 +424,7 @@ function resolvePluginConfig(
 
     return {
         input: config.input,
-        assetUrl: config.assetUrl || (config.assetUrl ?? "static"),
+        assetUrl:  config.assetUrl ?? "static",
         resourceDirectory: config.resourceDirectory ?? "/resources/",
         bundleDirectory:
             config.bundleDirectory || (config.bundleDirectory ?? "public"),
@@ -527,7 +527,7 @@ function resolveDevServerUrl(
     const configHost =
         typeof config.server.host === "string" ? config.server.host : null;
     const remoteHost =
-        process.env.LITESTAR_VITE_ALLOW_REMOTE && !userConfig.server?.host
+        process.env.VITE_ALLOW_REMOTE && !userConfig.server?.host
             ? "localhost"
             : null;
     const serverAddress = isIpv6(address)
