@@ -330,13 +330,14 @@ function ensureCommandShouldRunInEnvironment(
     command: "build" | "serve",
     env: Record<string, string>
 ): void {
+    const validEnvironmentNames = ['dev','development','local','docker'];
     if (command === "build" || env.LITESTAR_BYPASS_ENV_CHECK === "1") {
         return;
     }
 
-    if (typeof env.LITESTAR_MODE !== "undefined") {
+    if (typeof env.LITESTAR_MODE !== "undefined" && validEnvironmentNames.some(e => e === env.LITESTAR_MODE)) {
         throw Error(
-            "You should not run the Vite HMR server when Litestar is in production. You should build your assets for production instead. To disable this ENV check you may set LITESTAR_BYPASS_ENV_CHECK=1"
+            "You should only run Vite dev server when Litestar is development mode. You should build your assets for production instead. To disable this ENV check you may set LITESTAR_BYPASS_ENV_CHECK=1"
         );
     }
 
@@ -591,16 +592,16 @@ function resolveEnvironmentServerConfig(env: Record<string, string>):
           https?: { cert: Buffer; key: Buffer };
       }
     | undefined {
-    if (!env.VITE_DEV_SERVER_KEY && !env.VITE_DEV_SERVER_CERT) {
+    if (!env.VITE_SERVER_KEY && !env.VITE_SERVER_CERT) {
         return;
     }
 
     if (
-        !fs.existsSync(env.VITE_DEV_SERVER_KEY) ||
-        !fs.existsSync(env.VITE_DEV_SERVER_CERT)
+        !fs.existsSync(env.VITE_SERVER_KEY) ||
+        !fs.existsSync(env.VITE_SERVER_CERT)
     ) {
         throw Error(
-            `Unable to find the certificate files specified in your environment. Ensure you have correctly configured VITE_DEV_SERVER_KEY: [${env.VITE_DEV_SERVER_KEY}] and VITE_DEV_SERVER_CERT: [${env.VITE_DEV_SERVER_CERT}].`
+            `Unable to find the certificate files specified in your environment. Ensure you have correctly configured VITE_SERVER_KEY: [${env.VITE_SERVER_KEY}] and VITE_SERVER_CERT: [${env.VITE_SERVER_CERT}].`
         );
     }
 
@@ -616,8 +617,8 @@ function resolveEnvironmentServerConfig(env: Record<string, string>):
         hmr: { host },
         host,
         https: {
-            key: fs.readFileSync(env.VITE_DEV_SERVER_KEY),
-            cert: fs.readFileSync(env.VITE_DEV_SERVER_CERT),
+            key: fs.readFileSync(env.VITE_SERVER_KEY),
+            cert: fs.readFileSync(env.VITE_SERVER_CERT),
         },
     };
 }

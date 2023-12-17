@@ -295,7 +295,7 @@ describe("litestar-vite-plugin", () => {
         delete process.env.VITE_PORT;
     });
 
-    it("allows the server configuration to be overridden inside a Sail container", () => {
+    it("allows the server configuration to be overridden inside a container", () => {
         process.env.VITE_ALLOW_REMOTE = "1";
         const plugin = litestar("resources/js/app.js")[0];
 
