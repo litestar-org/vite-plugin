@@ -137,7 +137,7 @@ function resolveLitestarPlugin(
             userConfig = config;
             const ssr = !!userConfig.build?.ssr;
             const env = loadEnv(mode, userConfig.envDir || process.cwd(), "");
-            const assetUrl = env.LITESTAR_ASSET_URL || pluginConfig.assetUrl;
+            const assetUrl = env.ASSET_URL || pluginConfig.assetUrl;
             const serverConfig =
                 command === "serve"
                     ? resolveDevelopmentEnvironmentServerConfig(
@@ -170,7 +170,7 @@ function resolveLitestarPlugin(
                     origin:
                         userConfig.server?.origin ??
                         "__litestar_vite_placeholder__",
-                    ...(process.env.LITESTAR_VITE_ALLOW_REMOTE
+                    ...(process.env.VITE_ALLOW_REMOTE
                         ? {
                               host: userConfig.server?.host ?? "0.0.0.0",
                               port:
@@ -330,13 +330,14 @@ function ensureCommandShouldRunInEnvironment(
     command: "build" | "serve",
     env: Record<string, string>
 ): void {
+    const validEnvironmentNames = ['dev','development','local','docker'];
     if (command === "build" || env.LITESTAR_BYPASS_ENV_CHECK === "1") {
         return;
     }
 
-    if (typeof env.LITESTAR_MODE !== "undefined") {
+    if (typeof env.LITESTAR_MODE !== "undefined" && validEnvironmentNames.some(e => e === env.LITESTAR_MODE)) {
         throw Error(
-            "You should not run the Vite HMR server when Litestar is in production. You should build your assets for production instead. To disable this ENV check you may set LITESTAR_BYPASS_ENV_CHECK=1"
+            "You should only run Vite dev server when Litestar is development mode. You should build your assets for production instead. To disable this ENV check you may set LITESTAR_BYPASS_ENV_CHECK=1"
         );
     }
 
@@ -351,7 +352,7 @@ function ensureCommandShouldRunInEnvironment(
  * The version of Litestar being run.
  */
 function litestarVersion(): string {
-    return "";
+    return "X.Y.Z";
 }
 
 /**
@@ -424,7 +425,7 @@ function resolvePluginConfig(
 
     return {
         input: config.input,
-        assetUrl: config.assetUrl || (config.assetUrl ?? "static"),
+        assetUrl:  config.assetUrl ?? "static",
         resourceDirectory: config.resourceDirectory ?? "/resources/",
         bundleDirectory:
             config.bundleDirectory || (config.bundleDirectory ?? "public"),
@@ -527,7 +528,7 @@ function resolveDevServerUrl(
     const configHost =
         typeof config.server.host === "string" ? config.server.host : null;
     const remoteHost =
-        process.env.LITESTAR_VITE_ALLOW_REMOTE && !userConfig.server?.host
+        process.env.VITE_ALLOW_REMOTE && !userConfig.server?.host
             ? "localhost"
             : null;
     const serverAddress = isIpv6(address)
@@ -591,16 +592,16 @@ function resolveEnvironmentServerConfig(env: Record<string, string>):
           https?: { cert: Buffer; key: Buffer };
       }
     | undefined {
-    if (!env.VITE_DEV_SERVER_KEY && !env.VITE_DEV_SERVER_CERT) {
+    if (!env.VITE_SERVER_KEY && !env.VITE_SERVER_CERT) {
         return;
     }
 
     if (
-        !fs.existsSync(env.VITE_DEV_SERVER_KEY) ||
-        !fs.existsSync(env.VITE_DEV_SERVER_CERT)
+        !fs.existsSync(env.VITE_SERVER_KEY) ||
+        !fs.existsSync(env.VITE_SERVER_CERT)
     ) {
         throw Error(
-            `Unable to find the certificate files specified in your environment. Ensure you have correctly configured VITE_DEV_SERVER_KEY: [${env.VITE_DEV_SERVER_KEY}] and VITE_DEV_SERVER_CERT: [${env.VITE_DEV_SERVER_CERT}].`
+            `Unable to find the certificate files specified in your environment. Ensure you have correctly configured VITE_SERVER_KEY: [${env.VITE_SERVER_KEY}] and VITE_SERVER_CERT: [${env.VITE_SERVER_CERT}].`
         );
     }
 
@@ -616,8 +617,8 @@ function resolveEnvironmentServerConfig(env: Record<string, string>):
         hmr: { host },
         host,
         https: {
-            key: fs.readFileSync(env.VITE_DEV_SERVER_KEY),
-            cert: fs.readFileSync(env.VITE_DEV_SERVER_CERT),
+            key: fs.readFileSync(env.VITE_SERVER_KEY),
+            cert: fs.readFileSync(env.VITE_SERVER_CERT),
         },
     };
 }
