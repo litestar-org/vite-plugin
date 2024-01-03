@@ -154,6 +154,7 @@ function resolveLitestarPlugin(
                         ? resolveBase(pluginConfig, assetUrl)
                         : pluginConfig.assetUrl),
                 publicDir: userConfig.publicDir ?? false,
+                clearScreen: false,
                 build: {
                     manifest: userConfig.build?.manifest ?? !ssr,
                     outDir:
@@ -290,11 +291,10 @@ function resolveLitestarPlugin(
                         fs.rmSync(pluginConfig.hotFile);
                     }
                 };
-
                 process.on("exit", clean);
-                process.on("SIGINT", process.exit);
-                process.on("SIGTERM", process.exit);
-                process.on("SIGHUP", process.exit);
+                process.on("SIGINT", process.exit(0));
+                process.on("SIGTERM", process.exit(0));
+                process.on("SIGHUP", process.exit(0));
 
                 exitHandlersBound = true;
             }
@@ -352,7 +352,7 @@ function ensureCommandShouldRunInEnvironment(
  * The version of Litestar being run.
  */
 function litestarVersion(): string {
-    return "X.Y.Z";
+    return "";
 }
 
 /**
