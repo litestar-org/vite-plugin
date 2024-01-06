@@ -157,6 +157,7 @@ function resolveLitestarPlugin(
                 clearScreen: false,
                 build: {
                     manifest: userConfig.build?.manifest ?? !ssr,
+                    ssrManifest: userConfig.build?.ssrManifest ?? (ssr ? 'ssr-manifest.json' : false),
                     outDir:
                         userConfig.build?.outDir ??
                         resolveOutDir(pluginConfig, ssr),
@@ -195,16 +196,7 @@ function resolveLitestarPlugin(
                                                 ? {}
                                                 : userConfig.server?.hmr),
                                         },
-                              https:
-                                  userConfig.server?.https === false
-                                      ? false
-                                      : {
-                                            ...serverConfig.https,
-                                            ...(userConfig.server?.https ===
-                                            true
-                                                ? {}
-                                                : userConfig.server?.https),
-                                        },
+                              https: userConfig.server?.https ?? serverConfig.https,
                           }
                         : undefined),
                 },
@@ -253,11 +245,7 @@ function resolveLitestarPlugin(
                     x: string | AddressInfo | null | undefined
                 ): x is AddressInfo => typeof x === "object";
                 if (isAddressInfo(address)) {
-                    viteDevServerUrl = resolveDevServerUrl(
-                        address,
-                        server.config,
-                        userConfig
-                    );
+                    viteDevServerUrl = userConfig.server?.origin ? userConfig.server.origin as DevServerUrl : resolveDevServerUrl(address, server.config, userConfig)
                     fs.writeFileSync(pluginConfig.hotFile, viteDevServerUrl);
 
                     setTimeout(() => {
@@ -292,9 +280,9 @@ function resolveLitestarPlugin(
                     }
                 };
                 process.on("exit", clean);
-                process.on("SIGINT", process.exit(0));
-                process.on("SIGTERM", process.exit(0));
-                process.on("SIGHUP", process.exit(0));
+                process.on('SIGINT', () => process.exit())
+                process.on('SIGTERM', () => process.exit())
+                process.on('SIGHUP', () => process.exit())
 
                 exitHandlersBound = true;
             }
