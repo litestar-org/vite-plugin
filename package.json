@@ -1,6 +1,7 @@
 {
     "name": "litestar-vite-plugin",
-    "version": "0.4.3",
+    "version": "0.5.1",
+    "type":"module",
     "description": "Litestar plugin for Vite.",
     "keywords": [
         "litestar",
@@ -16,27 +17,26 @@
     "author": "Litestar",
     "exports": {
         ".": {
-            "import": "./dist/index.mjs",
-            "require": "./dist/index.cjs",
-            "types": "./dist/index.d.ts"
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
         },
         "./inertia-helpers": {
-            "import": "./inertia-helpers/index.js",
             "types": "./inertia-helpers/index.d.ts",
-            "node": "./inertia-helpers/index.js"
+            "default": "./inertia-helpers/index.js"
         }
     },
     "types": "./dist/index.d.ts",
     "files": [
         "/dist",
         "/inertia-helpers"
-    ],
+    ],"bin": {
+        "clean-orphaned-assets": "bin/clean.js"
+    },
     "scripts": {
         "build": "npm run build-plugin && npm run build-inertia-helpers",
-        "build-plugin": "rm -rf dist && npm run build-plugin-types && npm run build-plugin-esm && npm run build-plugin-cjs && cp src/dev-server-index.html dist/",
+        "build-plugin": "rm -rf dist && npm run build-plugin-types && npm run build-plugin-esm && cp src/dev-server-index.html dist/",
         "build-plugin-types": "tsc --emitDeclarationOnly",
-        "build-plugin-cjs": "esbuild src/index.ts --platform=node --format=cjs --outfile=dist/index.cjs --define:import.meta.url=import_meta_url --inject:./import.meta.url-polyfill.js",
-        "build-plugin-esm": "esbuild src/index.ts --platform=node --format=esm --outfile=dist/index.mjs",
+        "build-plugin-esm": "esbuild src/index.ts --platform=node --format=esm --outfile=dist/index.js",
         "build-inertia-helpers": "rm -rf inertia-helpers && tsc --project tsconfig.inertia-helpers.json",
         "lint": "eslint --ext .ts ./src ./tests",
         "test": "vitest run"
@@ -59,6 +59,6 @@
     },
     "dependencies": {
         "picocolors": "^1.0.0",
-        "vite-plugin-full-reload": "^1.0.5"
+        "vite-plugin-full-reload": "^1.1.0"
     }
 }

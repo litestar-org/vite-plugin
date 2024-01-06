@@ -1,20 +1,10 @@
-import fs from "fs";
-import { AddressInfo } from "net";
-import { fileURLToPath } from "url";
-import path from "path";
-import colors from "picocolors";
-import {
-    Plugin,
-    loadEnv,
-    UserConfig,
-    ConfigEnv,
-    ResolvedConfig,
-    SSROptions,
-    PluginOption,
-} from "vite";
-import fullReload, {
-    Config as FullReloadConfig,
-} from "vite-plugin-full-reload";
+import fs from 'fs'
+import { AddressInfo } from 'net'
+import { fileURLToPath } from 'url'
+import path from 'path'
+import colors from 'picocolors'
+import { Plugin, loadEnv, UserConfig, ConfigEnv, ResolvedConfig, SSROptions, PluginOption } from 'vite'
+import fullReload, { Config as FullReloadConfig } from 'vite-plugin-full-reload'
 
 interface PluginConfig {
     /**
@@ -738,9 +728,3 @@ function dirname(): string {
     return fileURLToPath(new URL(".", import.meta.url));
 }
 
-/**
- * Path to certificates.
- */
-function certConfigPath(): string {
-    return  path.resolve(process.cwd(), ".config")
-}
