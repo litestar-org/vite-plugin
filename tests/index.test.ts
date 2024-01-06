@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import litestar from "../src";
+import litestar from "../src"
 import { resolvePageComponent } from "../src/inertia-helpers";
 
 describe("litestar-vite-plugin", () => {
@@ -28,13 +28,13 @@ describe("litestar-vite-plugin", () => {
             {},
             { command: "build", mode: "production" }
         );
-        expect(config.build.rollupOptions.input).toBe("resources/js/app.ts");
+        expect(config.build?.rollupOptions?.input).toBe("resources/js/app.ts");
 
         const ssrConfig = plugin.config(
             { build: { ssr: true } },
             { command: "build", mode: "production" }
         );
-        expect(ssrConfig.build.rollupOptions.input).toBe("resources/js/app.ts");
+        expect(ssrConfig.build?.rollupOptions?.input).toBe("resources/js/app.ts");
     });
 
     it("accepts an array of inputs", () => {
@@ -47,7 +47,7 @@ describe("litestar-vite-plugin", () => {
             {},
             { command: "build", mode: "production" }
         );
-        expect(config.build.rollupOptions.input).toEqual([
+        expect(config.build?.rollupOptions?.input).toEqual([
             "resources/js/app.ts",
             "resources/js/other.js",
         ]);
@@ -56,7 +56,7 @@ describe("litestar-vite-plugin", () => {
             { build: { ssr: true } },
             { command: "build", mode: "production" }
         );
-        expect(ssrConfig.build.rollupOptions.input).toEqual([
+        expect(ssrConfig.build?.rollupOptions?.input).toEqual([
             "resources/js/app.ts",
             "resources/js/other.js",
         ]);
@@ -76,18 +76,48 @@ describe("litestar-vite-plugin", () => {
             { command: "build", mode: "production" }
         );
         expect(config.base).toBe("other-build/");
-        expect(config.build.manifest).toBe(true);
-        expect(config.build.outDir).toBe("other-build");
-        expect(config.build.rollupOptions.input).toBe("resources/js/app.ts");
+        expect(config.build?.manifest).toBe("manifest.json");
+        expect(config.build?.outDir).toBe("other-build");
+        expect(config.build?.rollupOptions?.input).toBe("resources/js/app.ts");
 
         const ssrConfig = plugin.config(
             { build: { ssr: true } },
             { command: "build", mode: "production" }
         );
         expect(ssrConfig.base).toBe("other-build/");
-        expect(ssrConfig.build.manifest).toBe(false);
-        expect(ssrConfig.build.outDir).toBe("other-ssr-output");
-        expect(ssrConfig.build.rollupOptions.input).toBe("resources/js/ssr.ts");
+        expect(ssrConfig.build?.manifest).toBe(false);
+        expect(ssrConfig.build?.outDir).toBe("other-ssr-output");
+        expect(ssrConfig.build?.rollupOptions?.input).toBe("resources/js/ssr.ts");
+    });
+
+    it("respects the users build.manifest config option", () => {
+        const plugin = litestar({
+            input: "resources/js/app.js",
+        })[0];
+
+        const userConfig = { build: { manifest: "my-custom-manifest.json" } };
+
+        const config = plugin.config(userConfig, {
+            command: "build",
+            mode: "production",
+        });
+
+        expect(config.build?.manifest).toBe("my-custom-manifest.json");
+    });
+
+    it("has a default manifest path", () => {
+        const plugin = litestar({
+            input: "resources/js/app.js",
+        })[0];
+
+        const userConfig = {};
+
+        const config = plugin.config(userConfig, {
+            command: "build",
+            mode: "production",
+        });
+
+        expect(config.build?.manifest).toBe("manifest.json");
     });
 
     it("respects users base config option", () => {
@@ -116,18 +146,18 @@ describe("litestar-vite-plugin", () => {
             { command: "build", mode: "production" }
         );
         expect(config.base).toBe("static/");
-        expect(config.build.manifest).toBe(true);
-        expect(config.build.outDir).toBe("public");
-        expect(config.build.rollupOptions.input).toBe("resources/js/app.js");
+        expect(config.build?.manifest).toBe("manifest.json");
+        expect(config.build?.outDir).toBe("public");
+        expect(config.build?.rollupOptions?.input).toBe("resources/js/app.js");
 
         const ssrConfig = plugin.config(
             { build: { ssr: true } },
             { command: "build", mode: "production" }
         );
         expect(ssrConfig.base).toBe("static/");
-        expect(ssrConfig.build.manifest).toBe(false);
-        expect(ssrConfig.build.outDir).toBe("resources/bootstrap/ssr");
-        expect(ssrConfig.build.rollupOptions.input).toBe("resources/js/ssr.js");
+        expect(ssrConfig.build?.manifest).toBe(false);
+        expect(ssrConfig.build?.outDir).toBe("resources/bootstrap/ssr");
+        expect(ssrConfig.build?.rollupOptions?.input).toBe("resources/js/ssr.js");
     });
     it("accepts a partial configuration with an asset URL", () => {
         const plugin = litestar({
@@ -142,7 +172,7 @@ describe("litestar-vite-plugin", () => {
             { command: "build", mode: "production" }
         );
         expect(config.base).toBe("/over/the/rainbow/");
-        expect(config.build.manifest).toBe(true);
+        expect(config.build.manifest).toBe('manifest.json');
         expect(config.build.outDir).toBe("public/build");
         expect(config.build.rollupOptions.input).toBe("resources/js/app.js");
 
@@ -155,6 +185,7 @@ describe("litestar-vite-plugin", () => {
         expect(ssrConfig.build.outDir).toBe("resources/bootstrap/ssr");
         expect(ssrConfig.build.rollupOptions.input).toBe("resources/js/ssr.js");
     });
+
     it("uses the default entry point when ssr entry point is not provided", () => {
         // This is support users who may want a dedicated Vite config for SSR.
         const plugin = litestar("resources/js/ssr.js")[0];
@@ -163,7 +194,7 @@ describe("litestar-vite-plugin", () => {
             { build: { ssr: true } },
             { command: "build", mode: "production" }
         );
-        expect(ssrConfig.build.rollupOptions.input).toBe("resources/js/ssr.js");
+        expect(ssrConfig.build?.rollupOptions?.input).toBe("resources/js/ssr.js");
     });
 
     it("prefixes the base with ASSET_URL in production mode", () => {
@@ -208,13 +239,13 @@ describe("litestar-vite-plugin", () => {
             { command: "build", mode: "production" }
         );
         expect(config.base).toBe("static/");
-        expect(config.build.outDir).toBe("build/test");
+        expect(config.build?.outDir).toBe("build/test");
 
         const ssrConfig = plugin.config(
             { build: { ssr: true } },
             { command: "build", mode: "production" }
         );
-        expect(ssrConfig.build.outDir).toBe("ssr-output/test");
+        expect(ssrConfig.build?.outDir).toBe("ssr-output/test");
     });
 
     it("provides an @ alias by default", () => {
@@ -271,9 +302,9 @@ describe("litestar-vite-plugin", () => {
             {},
             { command: "serve", mode: "development" }
         );
-        expect(config.server.host).toBe("0.0.0.0");
-        expect(config.server.port).toBe(5173);
-        expect(config.server.strictPort).toBe(true);
+        expect(config.server?.host).toBe("0.0.0.0");
+        expect(config.server?.port).toBe(5173);
+        expect(config.server?.strictPort).toBe(true);
 
         delete process.env.VITE_ALLOW_REMOTE;
     });
@@ -287,9 +318,9 @@ describe("litestar-vite-plugin", () => {
             {},
             { command: "serve", mode: "development" }
         );
-        expect(config.server.host).toBe("0.0.0.0");
-        expect(config.server.port).toBe(1234);
-        expect(config.server.strictPort).toBe(true);
+        expect(config.server?.host).toBe("0.0.0.0");
+        expect(config.server?.port).toBe(1234);
+        expect(config.server?.strictPort).toBe(true);
 
         delete process.env.VITE_ALLOW_REMOTE;
         delete process.env.VITE_PORT;
@@ -309,9 +340,9 @@ describe("litestar-vite-plugin", () => {
             },
             { command: "serve", mode: "development" }
         );
-        expect(config.server.host).toBe("example.com");
-        expect(config.server.port).toBe(1234);
-        expect(config.server.strictPort).toBe(false);
+        expect(config.server?.host).toBe("example.com");
+        expect(config.server?.port).toBe(1234);
+        expect(config.server?.strictPort).toBe(false);
 
         delete process.env.VITE_ALLOW_REMOTE;
     });
@@ -496,5 +527,36 @@ describe("inertia-helpers", () => {
             import.meta.glob("./__data__/*.ts", { eager: true })
         );
         expect(file.default).toBe("Dummy File");
+    });
+
+    it("accepts array of paths", async () => {
+        const file = await resolvePageComponent<{ default: string }>(
+            ["missing-page", path],
+            import.meta.glob("./__data__/*.ts", { eager: true }),
+            path
+        );
+        expect(file.default).toBe("Dummy File");
+    });
+
+    it("throws an error when a page is not found", async () => {
+        const callback = () =>
+            resolvePageComponent<{ default: string }>(
+                "missing-page",
+                import.meta.glob("./__data__/*.ts")
+            );
+        await expect(callback).rejects.toThrowError(
+            new Error("Page not found: missing-page")
+        );
+    });
+
+    it("throws an error when a page is not found", async () => {
+        const callback = () =>
+            resolvePageComponent<{ default: string }>(
+                ["missing-page-1", "missing-page-2"],
+                import.meta.glob("./__data__/*.ts")
+            );
+        await expect(callback).rejects.toThrowError(
+            new Error("Page not found: missing-page-1,missing-page-2")
+        );
     });
 });

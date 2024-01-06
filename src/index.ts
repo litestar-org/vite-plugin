@@ -70,9 +70,9 @@ interface PluginConfig {
     /**
      * Utilize TLS certificates.
      *
-     * @default false
+     * @default null
      */
-    detectTls?: string | boolean;
+    detectTls?: string | boolean | null;
     /**
      * Transform the code while serving.
      */
@@ -156,8 +156,12 @@ function resolveLitestarPlugin(
                 publicDir: userConfig.publicDir ?? false,
                 clearScreen: false,
                 build: {
-                    manifest: userConfig.build?.manifest ?? !ssr,
-                    ssrManifest: userConfig.build?.ssrManifest ?? (ssr ? 'ssr-manifest.json' : false),
+                    manifest:
+                        userConfig.build?.manifest ??
+                        (ssr ? false : "manifest.json"),
+                    ssrManifest:
+                        userConfig.build?.ssrManifest ??
+                        (ssr ? "ssr-manifest.json" : false),
                     outDir:
                         userConfig.build?.outDir ??
                         resolveOutDir(pluginConfig, ssr),
@@ -196,7 +200,9 @@ function resolveLitestarPlugin(
                                                 ? {}
                                                 : userConfig.server?.hmr),
                                         },
-                              https: userConfig.server?.https ?? serverConfig.https,
+                              https:
+                                  userConfig.server?.https ??
+                                  serverConfig.https,
                           }
                         : undefined),
                 },
@@ -245,7 +251,13 @@ function resolveLitestarPlugin(
                     x: string | AddressInfo | null | undefined
                 ): x is AddressInfo => typeof x === "object";
                 if (isAddressInfo(address)) {
-                    viteDevServerUrl = userConfig.server?.origin ? userConfig.server.origin as DevServerUrl : resolveDevServerUrl(address, server.config, userConfig)
+                    viteDevServerUrl = userConfig.server?.origin
+                        ? (userConfig.server.origin as DevServerUrl)
+                        : resolveDevServerUrl(
+                              address,
+                              server.config,
+                              userConfig
+                          );
                     fs.writeFileSync(pluginConfig.hotFile, viteDevServerUrl);
 
                     setTimeout(() => {
@@ -279,10 +291,11 @@ function resolveLitestarPlugin(
                         fs.rmSync(pluginConfig.hotFile);
                     }
                 };
+
                 process.on("exit", clean);
-                process.on('SIGINT', () => process.exit())
-                process.on('SIGTERM', () => process.exit())
-                process.on('SIGHUP', () => process.exit())
+                process.on("SIGINT", () => process.exit());
+                process.on("SIGTERM", () => process.exit());
+                process.on("SIGHUP", () => process.exit());
 
                 exitHandlersBound = true;
             }
@@ -430,7 +443,10 @@ function resolvePluginConfig(
  * Resolve the Vite base option from the configuration.
  */
 function resolveBase(config: Required<PluginConfig>, assetUrl: string): string {
-    return assetUrl + (config.assetUrl.endsWith("/") ? "" : "/");
+    return (
+        assetUrl +
+        (assetUrl.endsWith("/") ? "" : "/")
+    );
 }
 
 /**
@@ -537,6 +553,7 @@ function isIpv6(address: AddressInfo): boolean {
     return (
         address.family === "IPv6" ||
         // In node >=18.0 <18.4 this was an integer value. This was changed in a minor version.
+        // See: https://github.com/laravel/vite-plugin/issues/103
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore-next-line
         address.family === 6
@@ -605,8 +622,8 @@ function resolveEnvironmentServerConfig(env: Record<string, string>):
         hmr: { host },
         host,
         https: {
-            key: fs.readFileSync(env.VITE_SERVER_KEY),
-            cert: fs.readFileSync(env.VITE_SERVER_CERT),
+            key: fs.readFileSync(env.VITE_DEV_SERVER_KEY),
+            cert: fs.readFileSync(env.VITE_DEV_SERVER_CERT),
         },
     };
 }
@@ -625,11 +642,13 @@ function resolveHostFromEnv(env: Record<string, string>): string | undefined {
 /**
  * Resolve the Herd or Valet server config for the given host.
  */
-function resolveDevelopmentEnvironmentServerConfig(host: string | boolean):
+function resolveDevelopmentEnvironmentServerConfig(
+    host: string | boolean | null
+):
     | {
           hmr?: { host: string };
           host?: string;
-          https?: { cert: Buffer; key: Buffer };
+          https?: { cert: string; key: string };
       }
     | undefined {
     if (host === false) {
@@ -638,31 +657,54 @@ function resolveDevelopmentEnvironmentServerConfig(host: string | boolean):
 
     const configPath = determineDevelopmentEnvironmentConfigPath();
 
-    host = host === true ? resolveDevelopmentEnvironmentHost(configPath) : host;
+    if (typeof configPath === "undefined" && host === null) {
+        return;
+    }
 
-    const keyPath = path.resolve(configPath, "certs", `${host}.key`);
-    const certPath = path.resolve(configPath, "certs", `${host}.crt`);
+    if (typeof configPath === "undefined") {
+        throw Error(
+            `Unable to find the Herd or Valet configuration directory. Please check they are correctly installed.`
+        );
+    }
 
-    if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
+    const resolvedHost =
+        host === true || host === null
+            ? path.basename(process.cwd()) +
+              "." +
+              resolveDevelopmentEnvironmentTld(configPath)
+            : host;
+
+    const keyPath = path.resolve(
+        configPath,
+        "certs",
+        `${resolvedHost}.key`
+    );
+    const certPath = path.resolve(
+        configPath,
+        "certs",
+        `${resolvedHost}.crt`
+    );
+
+    if ((!fs.existsSync(keyPath) || !fs.existsSync(certPath)) && host === null) {
         throw Error(
             `Unable to find certificate files for your host [${host}] in the [${configPath}/certs] directory.`
         );
     }
 
     return {
-        hmr: { host },
-        host,
+        hmr: { host: resolvedHost },
+        host: resolvedHost,
         https: {
-            key: fs.readFileSync(keyPath),
-            cert: fs.readFileSync(certPath),
+            key: keyPath,
+            cert: certPath,
         },
     };
 }
 
 /**
- * Resolve the path app config directory.
+ * Resolve the path configuration directory.
  */
-function determineDevelopmentEnvironmentConfigPath(): string {
+function determineDevelopmentEnvironmentConfigPath(): string | undefined {
     const envConfigPath = path.resolve(process.cwd(), ".config");
 
     if (fs.existsSync(envConfigPath)) {
@@ -673,22 +715,20 @@ function determineDevelopmentEnvironmentConfigPath(): string {
 }
 
 /**
- * Resolve the Herd or Valet host for the current directory.
+ * Resolve the TLD via the config path.
  */
-function resolveDevelopmentEnvironmentHost(configPath: string): string {
+function resolveDevelopmentEnvironmentTld(configPath: string): string {
     const configFile = path.resolve(configPath, "config.json");
 
     if (!fs.existsSync(configFile)) {
-        throw Error(
-            `Unable to find the configuration file [${configFile}]. You will need to manually specify the host in the \`detectTls\` configuration option.`
-        );
+        throw Error(`Unable to find the configuration file [${configFile}].`);
     }
 
     const config: { tld: string } = JSON.parse(
         fs.readFileSync(configFile, "utf-8")
     );
 
-    return path.basename(process.cwd()) + "." + config.tld;
+    return config.tld;
 }
 
 /**
@@ -696,4 +736,11 @@ function resolveDevelopmentEnvironmentHost(configPath: string): string {
  */
 function dirname(): string {
     return fileURLToPath(new URL(".", import.meta.url));
+}
+
+/**
+ * Path to certificates.
+ */
+function certConfigPath(): string {
+    return  path.resolve(process.cwd(), ".config")
 }
