@@ -248,6 +248,7 @@ function resolveLitestarPlugin(
                               server.config,
                               userConfig
                           );
+                    fs.mkdirSync(path.dirname(pluginConfig.hotFile), {recursive: true})
                     fs.writeFileSync(pluginConfig.hotFile, viteDevServerUrl);
 
                     setTimeout(() => {
