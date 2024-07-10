@@ -68,8 +68,8 @@ export function route(routeName: string, ...args: any[]): string | null {
                 url = url.replace(token, argValue.toString());
             });
         }
-    } catch (error) {
-        console.error(error.message); // Log the error message
+    } catch (error: any) {
+        console.error(error.message);
         return null; // Return null to indicate failure
     }
 

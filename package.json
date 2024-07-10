@@ -1,7 +1,7 @@
 {
     "name": "litestar-vite-plugin",
     "version": "0.6.1",
-    "type":"module",
+    "type": "module",
     "description": "Litestar plugin for Vite.",
     "keywords": [
         "litestar",
@@ -11,7 +11,7 @@
     "homepage": "https://github.com/litestar-org/vite-plugin",
     "repository": {
         "type": "git",
-        "url": "https://github.com/litestar-org/vite-plugin"
+        "url": "git+https://github.com/litestar-org/vite-plugin.git"
     },
     "license": "MIT",
     "author": "Litestar",
@@ -29,7 +29,8 @@
     "files": [
         "/dist",
         "/inertia-helpers"
-    ],"bin": {
+    ],
+    "bin": {
         "clean-orphaned-assets": "bin/clean.js"
     },
     "scripts": {
