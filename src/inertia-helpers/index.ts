@@ -21,11 +21,11 @@ declare global {
     var routes: { [key: string]: string };
 }
 globalThis.routes = globalThis.routes || {};
-export function route(routeName: string, ...args: any[]): string | null {
+export function route(routeName: string, ...args: any[]): string  {
     let url = globalThis.routes[routeName];
     if (!url) {
         console.error(`URL '${routeName}' not found in routes.`);
-        return null; // Return null to indicate failure
+        return "#"; // Return "#" to indicate failure
     }
 
     const argTokens = url.match(/<(\w+:?)?\w+>/g);
@@ -34,7 +34,7 @@ export function route(routeName: string, ...args: any[]): string | null {
         console.error(
             `Invalid URL lookup: URL '${routeName}' does not expect arguments.`
         );
-        return null;
+        return "#";
     }
     try {
         if (typeof args[0] === "object" && !Array.isArray(args[0])) {
@@ -70,7 +70,7 @@ export function route(routeName: string, ...args: any[]): string | null {
         }
     } catch (error: any) {
         console.error(error.message);
-        return null; // Return null to indicate failure
+        return "#";
     }
 
     return url;
