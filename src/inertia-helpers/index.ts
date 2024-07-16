@@ -16,11 +16,7 @@ export async function resolvePageComponent<T>(
     throw new Error(`Page not found: ${path}`);
 }
 
-declare global {
-    // eslint-disable-next-line no-var
-    var routes: { [key: string]: string };
-}
-globalThis.routes = globalThis.routes || {};
+
 export function route(routeName: string, ...args: any[]): string  {
     let url = globalThis.routes[routeName];
     if (!url) {
@@ -28,7 +24,7 @@ export function route(routeName: string, ...args: any[]): string  {
         return "#"; // Return "#" to indicate failure
     }
 
-    const argTokens = url.match(/<(\w+:?)?\w+>/g);
+    const argTokens = url.match(/{(\w+:?)?\w+}/g);
 
     if (!argTokens && args.length > 0) {
         console.error(
@@ -75,3 +71,86 @@ export function route(routeName: string, ...args: any[]): string  {
 
     return url;
 }
+
+
+export function toRoute(url: string): string | null  {
+    for (const routeName in routes) {
+        const routePattern = routes[routeName];
+        const regexPattern = routePattern
+          .replace(/{\w+:(\w+)}/g, (match, paramName, paramType) => {
+            // Create a regex pattern based on the parameter type
+            switch (paramType) {
+              case 'str':
+              case 'path':
+                return '([^/]+)'; // Match any non-slash characters
+              case 'uuid':
+                return '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'; // Match a UUID pattern
+              default:
+                return '([^/]+)'; // Default to match any non-slash characters
+            }
+          })
+          .replace(/\//g, '\\/'); // Escape slashes for regex
+
+        const regex = new RegExp('^' + regexPattern);
+        if (regex.test(url)) {
+          return routeName;
+        }
+      }
+
+      return null; // No matching route found
+}
+
+
+export function currentRoute(): string | null  {
+    const currentUrl = window.location.pathname;
+    return toRoute(currentUrl)
+}
+
+
+export function isRoute(url: string, routeName: string): boolean  {
+    try{
+        const routePattern = routes[routeName];
+        const regexPattern = routePattern
+            .replace(/{\w+:(\w+)}/g, (match, paramName, paramType) => {
+                // Create a regex pattern based on the parameter type
+                switch (paramType) {
+                case 'str':
+                case 'path':
+                    return '([^/]+)'; // Match any non-slash characters
+                case 'uuid':
+                    return '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'; // Match a UUID pattern
+                default:
+                    return '([^/]+)'; // Default to match any non-slash characters
+                }
+            })
+            .replace(/\//g, '\\/'); // Escape slashes for regex
+            const regex = new RegExp('^' + regexPattern);
+            return regex.test(url)
+    } catch (error: any) {
+        console.error(error);
+        return false
+    }
+}
+export function isCurrentRoute(routeName: string): boolean {
+    const currentRouteName = currentRoute()
+    if (!currentRouteName) {
+        console.error("Could not match current window location to a named route.");
+        return false
+    }
+    return currentRouteName == routeName
+}
+declare global {
+    // eslint-disable-next-line no-var
+    var routes: { [key: string]: string };
+    function route(routeName: string, ...args: any[]): string
+    function toRoute(url: string): string | null
+    function currentRoute(): string | null
+    function isRoute(url: string, routeName: string): boolean
+    function isCurrentRoute(routeName: string): boolean
+}
+globalThis.routes = globalThis.routes || {};
+globalThis.route = route
+globalThis.toRoute = toRoute
+globalThis.currentRoute = currentRoute
+globalThis.isRoute = isRoute
+globalThis.isCurrentRoute = isCurrentRoute
