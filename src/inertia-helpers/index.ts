@@ -81,6 +81,9 @@ export function getRelativeUrlPath(url: string): string {
         return url;
     }
 }
+function routePatternToRegex(pattern: string): RegExp {
+    return new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+}
 
 
 export function toRoute(url: string): string | null  {
@@ -122,7 +125,7 @@ export function currentRoute(): string | null  {
 export function isRoute(url: string, routeName: string): boolean  {
     url = getRelativeUrlPath(url)
     url = url === '/' ? url : url.replace(/\/$/, '');
-    const routeNameRegex = new RegExp('^' + routeName.replace(/\*/g, '.*') + '$');
+    const routeNameRegex = routePatternToRegex(routeName);
 
     for (const routeName in routes) {
         if (routeNameRegex.test(routeName)) {
@@ -154,7 +157,7 @@ export function isCurrentRoute(routeName: string): boolean {
         console.error("Could not match current window location to a named route.");
         return false
     }
-    const routeNameRegex = new RegExp('^' + routeName.replace(/\*/g, '.*') + '$');
+    const routeNameRegex = routePatternToRegex(routeName);
 
     return routeNameRegex.test(currentRouteName);
 }
