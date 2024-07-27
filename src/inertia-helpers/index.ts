@@ -122,26 +122,31 @@ export function currentRoute(): string | null  {
 export function isRoute(url: string, routeName: string): boolean  {
     url = getRelativeUrlPath(url)
     url = url === '/' ? url : url.replace(/\/$/, '');
-    try{
-        const routePattern = routes[routeName];
-        const regexPattern = routePattern.replace(/\//g, '\\/').replace(/\{([^}]+):([^}]+)\}/g, (match, paramName, paramType) => {
-            // Create a regex pattern based on the parameter type
-            switch (paramType) {
-              case 'str':
-              case 'path':
-                return '([^/]+)'; // Match any non-slash characters
-              case 'uuid':
-                return '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'; // Match a UUID pattern
-              default:
-                return '([^/]+)'; // Default to match any non-slash characters
+    const routeNameRegex = new RegExp('^' + routeName.replace(/\*/g, '.*') + '$');
+
+    for (const routeName in routes) {
+        if (routeNameRegex.test(routeName)) {
+            const routePattern = routes[routeName];
+            const regexPattern = routePattern.replace(/\//g, '\\/').replace(/\{([^}]+):([^}]+)\}/g, (match, paramName, paramType) => {
+                switch (paramType) {
+                    case 'str':
+                    case 'path':
+                        return '([^/]+)';
+                    case 'uuid':
+                        return '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+                    default:
+                        return '([^/]+)';
+                }
+            });
+
+            const regex = new RegExp(`^${regexPattern}$`);
+            if (regex.test(url)) {
+                return true;
             }
-          })
-        const regex = new RegExp(`^${regexPattern}$`);
-        return regex.test(url)
-    } catch (error: any) {
-        console.error(error);
-        return false
+        }
     }
+
+    return false;
 }
 export function isCurrentRoute(routeName: string): boolean {
     const currentRouteName = currentRoute()
@@ -149,7 +154,9 @@ export function isCurrentRoute(routeName: string): boolean {
         console.error("Could not match current window location to a named route.");
         return false
     }
-    return currentRouteName == routeName
+    const routeNameRegex = new RegExp('^' + routeName.replace(/\*/g, '.*') + '$');
+
+    return routeNameRegex.test(currentRouteName);
 }
 declare global {
     // eslint-disable-next-line no-var
