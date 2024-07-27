@@ -24,7 +24,7 @@ export function route(routeName: string, ...args: any[]): string  {
         return "#"; // Return "#" to indicate failure
     }
 
-    const argTokens = url.match(/{(\w+:?)?\w+}/g);
+    const argTokens = url.match(/\{([^}]+):([^}]+)\}/g);
 
     if (!argTokens && args.length > 0) {
         console.error(
@@ -72,12 +72,24 @@ export function route(routeName: string, ...args: any[]): string  {
     return url;
 }
 
+export function getRelativeUrlPath(url: string): string {
+    try {
+        const urlObject = new URL(url);
+        return urlObject.pathname + urlObject.search + urlObject.hash;
+    } catch (e) {
+        // If the URL is invalid or already a relative path, just return it as is
+        return url;
+    }
+}
+
 
 export function toRoute(url: string): string | null  {
+    url = getRelativeUrlPath(url)
+    url = url === '/' ? url : url.replace(/\/$/, '');
+
     for (const routeName in routes) {
         const routePattern = routes[routeName];
-        const regexPattern = routePattern
-          .replace(/{\w+:(\w+)}/g, (match, paramName, paramType) => {
+        const regexPattern = routePattern.replace(/\//g, '\\/').replace(/\{([^}]+):([^}]+)\}/g, (match, paramName, paramType) => {
             // Create a regex pattern based on the parameter type
             switch (paramType) {
               case 'str':
@@ -89,9 +101,9 @@ export function toRoute(url: string): string | null  {
                 return '([^/]+)'; // Default to match any non-slash characters
             }
           })
-          .replace(/\//g, '\\/'); // Escape slashes for regex
 
-        const regex = new RegExp('^' + regexPattern);
+
+        const regex = new RegExp(`^${regexPattern}$`);
         if (regex.test(url)) {
           return routeName;
         }
@@ -108,24 +120,24 @@ export function currentRoute(): string | null  {
 
 
 export function isRoute(url: string, routeName: string): boolean  {
+    url = getRelativeUrlPath(url)
+    url = url === '/' ? url : url.replace(/\/$/, '');
     try{
         const routePattern = routes[routeName];
-        const regexPattern = routePattern
-            .replace(/{\w+:(\w+)}/g, (match, paramName, paramType) => {
-                // Create a regex pattern based on the parameter type
-                switch (paramType) {
-                case 'str':
-                case 'path':
-                    return '([^/]+)'; // Match any non-slash characters
-                case 'uuid':
-                    return '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'; // Match a UUID pattern
-                default:
-                    return '([^/]+)'; // Default to match any non-slash characters
-                }
-            })
-            .replace(/\//g, '\\/'); // Escape slashes for regex
-            const regex = new RegExp('^' + regexPattern);
-            return regex.test(url)
+        const regexPattern = routePattern.replace(/\//g, '\\/').replace(/\{([^}]+):([^}]+)\}/g, (match, paramName, paramType) => {
+            // Create a regex pattern based on the parameter type
+            switch (paramType) {
+              case 'str':
+              case 'path':
+                return '([^/]+)'; // Match any non-slash characters
+              case 'uuid':
+                return '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'; // Match a UUID pattern
+              default:
+                return '([^/]+)'; // Default to match any non-slash characters
+            }
+          })
+        const regex = new RegExp(`^${regexPattern}$`);
+        return regex.test(url)
     } catch (error: any) {
         console.error(error);
         return false
