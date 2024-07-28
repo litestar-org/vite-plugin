@@ -17,7 +17,7 @@ export async function resolvePageComponent<T>(
 }
 
 
-export function route(routeName: string, ...args: any[]): string  {
+export function route(routeName: string,options: { relativeUrl?: boolean } = {}, ...args: any[]): string  {
     let url = globalThis.routes[routeName];
     if (!url) {
         console.error(`URL '${routeName}' not found in routes.`);
@@ -69,7 +69,11 @@ export function route(routeName: string, ...args: any[]): string  {
         return "#";
     }
 
-    return url;
+    if (options.relativeUrl) {
+        return url
+    }
+    const fullUrl = new URL(url, window.location.origin);
+    return fullUrl.href;
 }
 
 export function getRelativeUrlPath(url: string): string {
